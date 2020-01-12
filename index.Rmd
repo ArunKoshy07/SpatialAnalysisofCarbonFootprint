@@ -1,0 +1,185 @@
+---
+title: "Spatial Analysis of Carbon Footprint"
+output:
+  pdf_document: default
+  html_document:
+    code_folding: hide
+    df_print: paged
+---
+```{r include = FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+```
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+getwd()
+library(sf)
+library(sp)
+library(tmap)
+library(tmaptools)
+library(plyr)
+library(tidyverse)
+library(rgdal)
+library(rmapshaper)
+```
+Read the shapefile and generate a interactive plot
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+setwd("C:/CASA_SDAV/GIS_CASA0005/FinalCoursework")
+tmap_mode('view')
+OSMN <- st_read('bdline_gpkg_gb/data/bdline_gb.gpkg',layer='district_borough_unitary')
+summary(OSMN)
+OSMN <- st_transform(OSMN,27700)
+st_crs(OSMN)
+```
+
+```{r}
+tm_shape(OSMN) + tm_polygons()+ tm_legend(text.size=1,title.size=1.2,position=c("left","top"))
+```
+```{r}
+setwd("C:/CASA_SDAV/GIS_CASA0005/FinalCoursework")
+
+UKCO2.df <- read_csv("2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv")
+summary(UKCO2.df)
+names(UKCO2.df)
+setwd('C:/CASA_SDAV/GIS_CASA0005/FinalCoursework/SpatialAnalysisofCarbonFootprint/Shapefile')
+OSME <- st_read("DistrictBoroughUnitaryEngWalScot.shp")
+OSME <- st_transform(OSME,crs=27700)
+OSME <- ms_simplify(OSME,0.05)
+OSME
+
+OSMEJ.df <- merge(OSME,UKCO2.df,by.x=c("Census_Cod"),by.y=c("LAD14CD"))
+names(OSMEJ.df)
+colnames(OSMEJ.df)[39] <- "Population ('000S)"
+tmap_mode("plot")
+
+tm1 <- tm_shape(OSMEJ.df %>% filter(Year==c(2006) )) +
+  tm_polygons("Grand Total", 
+              #style=c("jenks", "pretty"),
+              #palette=list("YlOrBr", "Purples"),
+              style="jenks",
+              palette="Purples",
+              midpoint=FALSE,
+              border.lwd =0,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE)+
+  tm_borders(lwd=1) +
+  tm_credits("2006", position=c(0,0.85), size=1.5)
+tm2 <- tm_shape(OSMEJ.df %>% filter(Year==c(2012) )) +
+  tm_polygons("Grand Total", 
+              #style=c("jenks", "pretty"),
+              #              palette=list("YlOrBr", "Purples"),
+              style="jenks",
+              palette="Purples",
+              midpoint=FALSE,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE)+
+  tm_credits("2012", position=c(0,0.85), size=1.5)
+tm3 <- tm_shape(Emissions2017 <- OSMEJ.df %>% filter(Year==c(2017) )) +
+  tm_polygons("Grand Total", 
+              #style=c("jenks", "pretty"),
+              #palette=list("YlOrBr", "Purples"),
+              style="jenks",
+              palette="Purples",
+              midpoint=FALSE,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE)+
+  tm_credits("2017", position=c(0,0.85), size=1.5)
+
+legend <- tm_shape(OSMEJ.df %>% filter(Year==c(2017))) +
+  tm_polygons("Grand Total",title="Grand Total Emission",style="jenks",
+              palette="Purples") +
+  tm_scale_bar(position=c(0.2,0.04), text.size=0.6)+
+  tm_compass(north=0, position=c(0.65,0.6))+
+  tm_layout(legend.only = TRUE, legend.position=c(0.2,0.25),asp=0.1)+
+  tm_credits("(c) Ordinance Survey and DEFRA", position=c(0.0,0.0))
+
+
+t=tmap_arrange(tm1, tm2, tm3, legend,ncol=2)
+t
+```
+
+Read the shapefile and generate a interactive plot
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+setwd("C:/CASA_SDAV/GIS_CASA0005/FinalCoursework")
+tmap_mode('view')
+OSMN <- st_read('bdline_gpkg_gb/data/bdline_gb.gpkg',layer='district_borough_unitary')
+summary(OSMN)
+OSMN <- st_transform(OSMN,27700)
+st_crs(OSMN)
+```
+
+```{r}
+tm_shape(OSMN) + tm_polygons()+ tm_legend(text.size=1,title.size=1.2,position=c("left","top"))
+```
+```{r}
+setwd("C:/CASA_SDAV/GIS_CASA0005/FinalCoursework")
+
+UKCO2.df <- read_csv("2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv")
+summary(UKCO2.df)
+names(UKCO2.df)
+setwd('C:/CASA_SDAV/GIS_CASA0005/FinalCoursework/SpatialAnalysisofCarbonFootprint/Shapefile')
+OSME <- st_read("DistrictBoroughUnitaryEngWalScot.shp")
+OSME <- st_transform(OSME,crs=27700)
+OSME <- ms_simplify(OSME,0.05)
+OSME
+
+OSMEJ.df <- merge(OSME,UKCO2.df,by.x=c("Census_Cod"),by.y=c("LAD14CD"))
+names(OSMEJ.df)
+colnames(OSMEJ.df)[39] <- "Population ('000S)"
+tmap_mode("plot")
+
+tm1 <- tm_shape(OSMEJ.df %>% filter(Year==c(2006) )) +
+  tm_polygons("Grand Total", 
+              #style=c("jenks", "pretty"),
+              #palette=list("YlOrBr", "Purples"),
+              style="jenks",
+              palette="Purples",
+              midpoint=FALSE,
+              border.lwd =0,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE)+
+  tm_borders(lwd=1) +
+  tm_credits("2006", position=c(0,0.85), size=1.5)
+tm2 <- tm_shape(OSMEJ.df %>% filter(Year==c(2012) )) +
+  tm_polygons("Grand Total", 
+              #style=c("jenks", "pretty"),
+              #              palette=list("YlOrBr", "Purples"),
+              style="jenks",
+              palette="Purples",
+              midpoint=FALSE,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE)+
+  tm_credits("2012", position=c(0,0.85), size=1.5)
+tm3 <- tm_shape(Emissions2017 <- OSMEJ.df %>% filter(Year==c(2017) )) +
+  tm_polygons("Grand Total", 
+              #style=c("jenks", "pretty"),
+              #palette=list("YlOrBr", "Purples"),
+              style="jenks",
+              palette="Purples",
+              midpoint=FALSE,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE)+
+  tm_credits("2017", position=c(0,0.85), size=1.5)
+
+legend <- tm_shape(OSMEJ.df %>% filter(Year==c(2017))) +
+  tm_polygons("Grand Total",title="Grand Total Emission",style="jenks",
+              palette="Purples") +
+  tm_scale_bar(position=c(0.2,0.04), text.size=0.6)+
+  tm_compass(north=0, position=c(0.65,0.6))+
+  tm_layout(legend.only = TRUE, legend.position=c(0.2,0.25),asp=0.1)+
+  tm_credits("(c) Ordinance Survey and DEFRA", position=c(0.0,0.0))
+
+
+t=tmap_arrange(tm1, tm2, tm3, legend,ncol=2)
+t
+```

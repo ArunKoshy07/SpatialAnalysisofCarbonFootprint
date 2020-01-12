@@ -1,0 +1,14 @@
+name: "Spatial Analysis of Carbon footprint"
+output_dir: .
+navbar:
+  title: "Carbon footprint spatial analysis"
+  right:
+    - text: "Home"
+      href: index.html
+    - text: "About"
+      href: about.html
+      
+output:
+  html_document: 
+    theme: cosmo
+    css: css/style.css
