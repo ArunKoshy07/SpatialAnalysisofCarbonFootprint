@@ -1,185 +1,316 @@
 ---
 title: "Spatial Analysis of Carbon Footprint"
 output:
-  pdf_document: default
   html_document:
     code_folding: hide
     df_print: paged
 ---
-```{r include = FALSE}
-knitr::opts_chunk$set(echo=FALSE)
-```
 
-```{r include = FALSE}
-knitr::opts_chunk$set(echo=FALSE)
-getwd()
+Global warming and Climate Change is causing catastrophic and devastating effect on the planet earth.The impact of global warming is wide ranging and few of those are increase in temperature along tropical regions, increase in humidity, melt down of artic glaciers,  affects the Marine ecosystem like ocean acidification and depletion of coral reefs, increase in sea level, harsh seasons, affects the vulnerable people, increase poverty and malnutrition, increase in heat related morbidity and mortalities, decrease in agricultural yields and nutritional quality of crops, affect the livestock, increase water stress and decline economic growth.  
+      
+ The data used for this analysis was confined to values with IQR for each variable.  The whole of Domestic and Non Domestic building EPC data couldn’t be used for this study, instead only the top 5 percent of the IQR values were used. Scatter plots were used to visualise the trend’s and the residual plots were used to visualise the variation of data from the mean.The Correlations analysis showed all the variables in scope of this research had very weak correlation coefficient with the total emissions.The Bivariate models had very low R squared values making it a not so good fit model. The Multi linear regression on the total emissions and emissionsfrom transport and domestic building proved to be a good fitting model with very low p value and R squared value close to 1.  
+ 
+The R code developed for the visualisation and analysis of this topic is provided below
+      
+      
+      
+ 
+Data and Shape files location (google drive) https://drive.google.com/drive/folders/16y-bm3wLjN4ChO5D3lzILaBkQCHKe7Og?usp=sharing
+
+
+```{r echo=TRUE, message=FALSE, warning=TRUE, paged.print=TRUE}
+library(crs)
 library(sf)
-library(sp)
 library(tmap)
 library(tmaptools)
 library(plyr)
 library(tidyverse)
-library(rgdal)
 library(rmapshaper)
+library(rgdal)
+library(dplyr)
+library(numbers)
+library(maptools)
+library(caret)
 ```
-Read the shapefile and generate a interactive plot
+Read the EPC data sets for Domestic and Non-Domestic buildings.
 
-```{r include = FALSE}
-knitr::opts_chunk$set(echo=FALSE)
-setwd("C:/CASA_SDAV/GIS_CASA0005/FinalCoursework")
-tmap_mode('view')
-OSMN <- st_read('bdline_gpkg_gb/data/bdline_gb.gpkg',layer='district_borough_unitary')
-summary(OSMN)
-OSMN <- st_transform(OSMN,27700)
-st_crs(OSMN)
+```{r eval=FALSE, include=FALSE}
+
+#Function to read through a folder structure and retrive data out of file having 
+#a filename provided as input 
+getfiledata <- function(folder, filename){
+  setwd(folder)
+  dirs <- list.dirs()
+  return.df <- data.frame()
+  files <- file.path(dirs,filename)
+  for(file in files[-1]){
+    return.df <- rbind(return.df,data.frame(read_csv(file)))
+  }
+  return(return.df)
+}
+
+ndomCert.df <- getfiledata("./Data/all-non-domestic-certificates","certificates.csv")
+
+#ndomCert.df
+write.csv(ndomCert.df[,c("LOCAL_AUTHORITY","POSTCODE","BUILDING_EMISSIONS")],
+          "./Data/all-non-domestic-certificates/combinedcertificates.csv",
+          row.names = FALSE)
+ndomCert.df <- NULL
+
+domCert.df <- getfiledata("./Data/all-domestic-certificates","certificates.csv")
+write.csv(domCert.df[,c("LOCAL_AUTHORITY","POSTCODE","CO2_EMISSIONS_CURRENT")],
+          "./Data/all-domestic-certificates/combinedcertificates.csv",
+          row.names = FALSE)
+domCert.df <- NULL
+
 ```
 
-```{r}
-tm_shape(OSMN) + tm_polygons()+ tm_legend(text.size=1,title.size=1.2,position=c("left","top"))
-```
-```{r}
-setwd("C:/CASA_SDAV/GIS_CASA0005/FinalCoursework")
 
-UKCO2.df <- read_csv("2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv")
-summary(UKCO2.df)
-names(UKCO2.df)
-setwd('C:/CASA_SDAV/GIS_CASA0005/FinalCoursework/SpatialAnalysisofCarbonFootprint/Shapefile')
-OSME <- st_read("DistrictBoroughUnitaryEngWalScot.shp")
+Read the extracted data and combine them for visualisation purpose.
+
+```{r echo=TRUE}
+#Read the Local authority emissions data file 
+UKCO2.df <- read_csv("./Data/2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv")
+#summary(UKCO2.df)
+#names(UKCO2.df)
+
+# Read the Shapefile
+OSME <- st_read("./Shapefile/DistrictBoroughUnitaryEngWalScot.shp")
 OSME <- st_transform(OSME,crs=27700)
 OSME <- ms_simplify(OSME,0.05)
-OSME
+#OSME
 
-OSMEJ.df <- merge(OSME,UKCO2.df,by.x=c("Census_Cod"),by.y=c("LAD14CD"))
-names(OSMEJ.df)
-colnames(OSMEJ.df)[39] <- "Population ('000S)"
-tmap_mode("plot")
+nondomestic.epc <- read.csv("./Data/all-non-domestic-certificates/combinedcertificates.csv")
 
-tm1 <- tm_shape(OSMEJ.df %>% filter(Year==c(2006) )) +
-  tm_polygons("Grand Total", 
+nondomestic.epc <- nondomestic.epc[,c("LOCAL_AUTHORITY","POSTCODE","BUILDING_EMISSIONS")]
+nondomestic.epc <- nondomestic.epc %>% filter(!is.na(LOCAL_AUTHORITY)) %>% filter(!is.na(BUILDING_EMISSIONS)) %>% 
+                    filter(BUILDING_EMISSIONS < 128)
+nondomestic.epc <- nondomestic.epc[order(-nondomestic.epc$BUILDING_EMISSIONS),]
+#summary(nondomestic.epc$BUILDING_EMISSIONS)
+
+
+domestic.epc <- read.csv("./Data/all-domestic-certificates/combinedcertificates.csv")
+domestic.epc <- domestic.epc %>% filter(!is.na(LOCAL_AUTHORITY)) %>% filter(!is.na(CO2_EMISSIONS_CURRENT))%>%
+              filter(CO2_EMISSIONS_CURRENT<=5.10)
+domestic.epc <- domestic.epc[order(-domestic.epc$CO2_EMISSIONS_CURRENT),]
+#domestic.epc
+#summary(domestic.epc$CO2_EMISSIONS_CURRENT)
+
+
+dlen = round(nrow(domestic.epc)*(5/100))
+nlen = round(nrow(nondomestic.epc)*(5/100))
+domestic.epct <- domestic.epc[1:dlen,] 
+nondomestic.epct <- nondomestic.epc[1:nlen,]
+
+
+pclatlon <- data.frame(read.csv("./Data/ukpostcodes/ukpostcodes.csv"))
+names(pclatlon) <- c("ID","POSTCODE","LATITUDE","LONGITUDE")
+#head(pclatlon)
+
+nondmc.df <- merge(nondomestic.epct,pclatlon,by="POSTCODE")
+dmc.df <- merge (domestic.epct,pclatlon,by="POSTCODE")
+
+
+ndmc.epc <- st_as_sf(nondmc.df, coords = c("LONGITUDE","LATITUDE"), crs = 4326)
+#summary(ndmc.epc$BUILDING_EMISSIONS)
+dmc.epc <- st_as_sf(dmc.df, coords = c("LONGITUDE","LATITUDE"), crs = 4326)
+#summary(dmc.epc$CO2_EMISSIONS_CURRENT)
+
+```
+
+R function to generate the time series map. 
+
+```{r rfunctionMap3, echo=TRUE}
+OSMEJ.df <- merge(OSME,UKCO2.df,by.x="Census_Cod",by.y="LAD14CD",all.x = TRUE)
+
+#left_join(OSME,UKCO2.df,by =c("Census_Cod"="LAD14CD"))
+
+#summarise(OSMEJ.df)
+
+
+colnames(OSMEJ.df)[39] <- "Population (000'S)"
+
+dispmap3 <-function(shpobj,fieldname,titlevalue,colcode){
+tm1 <- tm_shape(shpobj %>% filter(Year==c(2006) )) +
+  tm_polygons(fieldname,
+              style="jenks",
+              palette=colcode,
+              midpoint=FALSE,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE) 
+
+tm2 <- tm_shape( shpobj %>% filter(Year==c(2012) )) +
+  tm_polygons(fieldname, 
               #style=c("jenks", "pretty"),
               #palette=list("YlOrBr", "Purples"),
               style="jenks",
-              palette="Purples",
-              midpoint=FALSE,
-              border.lwd =0,
-              border.alpha=0.1)+
-  tm_legend(show=FALSE)+
-  tm_layout(frame=FALSE)+
-  tm_borders(lwd=1) +
-  tm_credits("2006", position=c(0,0.85), size=1.5)
-tm2 <- tm_shape(OSMEJ.df %>% filter(Year==c(2012) )) +
-  tm_polygons("Grand Total", 
-              #style=c("jenks", "pretty"),
-              #              palette=list("YlOrBr", "Purples"),
-              style="jenks",
-              palette="Purples",
+              palette=colcode,
               midpoint=FALSE,
               border.alpha=0.1)+
   tm_legend(show=FALSE)+
-  tm_layout(frame=FALSE)+
-  tm_credits("2012", position=c(0,0.85), size=1.5)
-tm3 <- tm_shape(Emissions2017 <- OSMEJ.df %>% filter(Year==c(2017) )) +
-  tm_polygons("Grand Total", 
-              #style=c("jenks", "pretty"),
-              #palette=list("YlOrBr", "Purples"),
-              style="jenks",
-              palette="Purples",
-              midpoint=FALSE,
-              border.alpha=0.1)+
-  tm_legend(show=FALSE)+
-  tm_layout(frame=FALSE)+
-  tm_credits("2017", position=c(0,0.85), size=1.5)
+  tm_layout(frame=FALSE) 
 
-legend <- tm_shape(OSMEJ.df %>% filter(Year==c(2017))) +
-  tm_polygons("Grand Total",title="Grand Total Emission",style="jenks",
-              palette="Purples") +
+tm3 <- tm_shape( shpobj %>% filter(Year==c(2017) )) +
+  tm_polygons(fieldname, 
+              style="jenks",
+              palette=colcode,
+              midpoint=FALSE,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE) 
+
+legend <- tm_shape(shpobj %>% filter(Year==c(2017))) +
+  tm_polygons(fieldname,title=titlevalue,
+              style="jenks",
+              palette=colcode) +
   tm_scale_bar(position=c(0.2,0.04), text.size=0.6)+
-  tm_compass(north=0, position=c(0.65,0.6))+
   tm_layout(legend.only = TRUE, legend.position=c(0.2,0.25),asp=0.1)+
   tm_credits("(c) Ordinance Survey and DEFRA", position=c(0.0,0.0))
 
-
-t=tmap_arrange(tm1, tm2, tm3, legend,ncol=2)
-t
-```
-
-Read the shapefile and generate a interactive plot
-
-```{r include = FALSE}
-knitr::opts_chunk$set(echo=FALSE)
-setwd("C:/CASA_SDAV/GIS_CASA0005/FinalCoursework")
-tmap_mode('view')
-OSMN <- st_read('bdline_gpkg_gb/data/bdline_gb.gpkg',layer='district_borough_unitary')
-summary(OSMN)
-OSMN <- st_transform(OSMN,27700)
-st_crs(OSMN)
-```
-
-```{r}
-tm_shape(OSMN) + tm_polygons()+ tm_legend(text.size=1,title.size=1.2,position=c("left","top"))
-```
-```{r}
-setwd("C:/CASA_SDAV/GIS_CASA0005/FinalCoursework")
-
-UKCO2.df <- read_csv("2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv")
-summary(UKCO2.df)
-names(UKCO2.df)
-setwd('C:/CASA_SDAV/GIS_CASA0005/FinalCoursework/SpatialAnalysisofCarbonFootprint/Shapefile')
-OSME <- st_read("DistrictBoroughUnitaryEngWalScot.shp")
-OSME <- st_transform(OSME,crs=27700)
-OSME <- ms_simplify(OSME,0.05)
-OSME
-
-OSMEJ.df <- merge(OSME,UKCO2.df,by.x=c("Census_Cod"),by.y=c("LAD14CD"))
-names(OSMEJ.df)
-colnames(OSMEJ.df)[39] <- "Population ('000S)"
 tmap_mode("plot")
+t=tmap_arrange(tm1,tm2,tm3,legend,ncol=4)
+t
+}
 
-tm1 <- tm_shape(OSMEJ.df %>% filter(Year==c(2006) )) +
-  tm_polygons("Grand Total", 
-              #style=c("jenks", "pretty"),
-              #palette=list("YlOrBr", "Purples"),
-              style="jenks",
-              palette="Purples",
-              midpoint=FALSE,
-              border.lwd =0,
-              border.alpha=0.1)+
-  tm_legend(show=FALSE)+
-  tm_layout(frame=FALSE)+
-  tm_borders(lwd=1) +
-  tm_credits("2006", position=c(0,0.85), size=1.5)
-tm2 <- tm_shape(OSMEJ.df %>% filter(Year==c(2012) )) +
-  tm_polygons("Grand Total", 
-              #style=c("jenks", "pretty"),
-              #              palette=list("YlOrBr", "Purples"),
-              style="jenks",
-              palette="Purples",
-              midpoint=FALSE,
-              border.alpha=0.1)+
-  tm_legend(show=FALSE)+
-  tm_layout(frame=FALSE)+
-  tm_credits("2012", position=c(0,0.85), size=1.5)
-tm3 <- tm_shape(Emissions2017 <- OSMEJ.df %>% filter(Year==c(2017) )) +
-  tm_polygons("Grand Total", 
-              #style=c("jenks", "pretty"),
-              #palette=list("YlOrBr", "Purples"),
-              style="jenks",
-              palette="Purples",
-              midpoint=FALSE,
-              border.alpha=0.1)+
-  tm_legend(show=FALSE)+
-  tm_layout(frame=FALSE)+
-  tm_credits("2017", position=c(0,0.85), size=1.5)
 
-legend <- tm_shape(OSMEJ.df %>% filter(Year==c(2017))) +
-  tm_polygons("Grand Total",title="Grand Total Emission",style="jenks",
-              palette="Purples") +
+
+```
+Display Time series maps for Total emissions, Transport Total, 
+
+```{r disp3map}
+
+dispmap3(OSMEJ.df,"Grand Total","Total Emissions (t)","YlOrBr")
+dispmap3(OSMEJ.df,"Transport Total","Transport Emissions","Blues")
+dispmap3(OSMEJ.df,"Population (000'S)","Population (000's)","YlGnBu")
+
+```
+
+Plot Domestic and Non Domestic Building data using a function. 
+function to plot the epc map.
+
+```{r plotEPCfunction, echo=TRUE}
+
+plotEpcData <- function(mapspdf,epcspdf,fieldname,maptext){
+  
+tm2 <- tm_shape(mapspdf) +
+  tm_fill("#081d58")+
+  tm_polygons()+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE) +
+  tm_shape(epcspdf)+ 
+  tm_dots(fieldname,palette="YlOrBr",size=0.0001)
+
+legend1 <- 
+  tm_shape(epcspdf)+ tm_dots(fieldname,title=maptext,
+                                    palette="YlOrBr") +
   tm_scale_bar(position=c(0.2,0.04), text.size=0.6)+
-  tm_compass(north=0, position=c(0.65,0.6))+
   tm_layout(legend.only = TRUE, legend.position=c(0.2,0.25),asp=0.1)+
   tm_credits("(c) Ordinance Survey and DEFRA", position=c(0.0,0.0))
 
-
-t=tmap_arrange(tm1, tm2, tm3, legend,ncol=2)
+tmap_mode("plot")
+t=tmap_arrange(tm2,legend1,ncol=2)
 t
+}
 ```
+
+Plot the EPC Maps for Domestic and Non Domestic data. 
+
+```{r plotEpcMap, echo=TRUE}
+
+plotEpcData(OSME,dmc.epc,"CO2_EMISSIONS_CURRENT","Domestic Emissions (Kilo)")
+plotEpcData(OSME,ndmc.epc,"BUILDING_EMISSIONS","Non-Domestic Building Emissions (t)")  
+```
+
+Aggregate all the values in the data frames at a local authority level. 
+Combine all spatial dataframes. 
+
+```{r DataAggregation, echo=TRUE}
+
+cdmc.epc <- dmc.epc %>% group_by(LOCAL_AUTHORITY)%>% 
+  summarise(CO2_EMISSIONS_CURRENT = sum(CO2_EMISSIONS_CURRENT))%>%
+  select(LOCAL_AUTHORITY,CO2_EMISSIONS_CURRENT) 
+
+cndmc.epc <- ndmc.epc %>% group_by(LOCAL_AUTHORITY)%>% 
+  summarise(BUILDING_EMISSIONS = sum(BUILDING_EMISSIONS))%>%
+  select(LOCAL_AUTHORITY,BUILDING_EMISSIONS)
+
+
+cdmc.epc <- st_transform(cdmc.epc,crs=27700)
+cndmc.epc <-  st_transform(cndmc.epc,crs=27700)
+
+COSMEJ.df <- st_join(st_join(OSMEJ.df,cdmc.epc,join=st_covers),
+                     cndmc.epc,join=st_covers )
+
+
+
+```
+
+
+Code to calcualte the pearson coefficient and do a scatterplot. Code to generate Pearson coeffiicient and scatterplot for Total Emission vs Transport Emissions.
+
+```{r calCorrelationCoffScatterplot, echo=TRUE}
+summary(OSMEJ.df$`Grand Total`)
+summary(OSMEJ.df$`Transport Total`)
+
+val <- OSMEJ.df %>% filter(Year == 2017)%>%filter(`Grand Total` <= 1296)   %>% 
+        filter(Year == 2017)%>%filter(`Transport Total` <= 417)
+
+scatter.smooth(x= val$`Grand Total`, 
+               y= val$`Transport Total`, 
+               main="Grand Total ~ Transport Emissions",
+               xlab="Grand Total (t)",
+               ylab="Transport Emission (t)") 
+
+stat_sig=cor.test(val$`Grand Total`, 
+                  val$`Transport Total`, 
+                  use ="complete.obs",
+                  method = c("pearson"))
+stat_sig
+
+linearMod <- lm(`Grand Total` ~ `Transport Total`, data=val)
+linearMod
+summary(linearMod)
+qplot(linearMod$residuals)+geom_histogram()
+
+```
+
+
+Prepare a data required running the multi linear regression. Convert the spatial dataframe to normal one, replace the NULL values with 0's. calculate the Population density as total population divided by area in hectare and store in a new column in data frame. 
+
+
+```{r MlDataPrep, echo=TRUE}
+colnames(COSMEJ.df)[39] <- "population"
+colnames(COSMEJ.df)[30] <- "DomesticTotal"
+
+
+ml.df<-as.data.frame(st_set_geometry(COSMEJ.df, NULL)) %>%filter(Year==2017)
+ml.df$population[is.na(ml.df$population)] <- 0
+ml.df$popden <- (ml.df$population*1000) %/% ml.df$Hectares
+ml.df$popden[is.na(ml.df$popden)] <- 0
+
+ml.df$DomesticTotal[is.na(ml.df$DomesticTotal)] <- 0
+ml.df$`Grand Total`[is.na(ml.df$`Grand Total`)] <- 0
+ml.df$`BUILDING_EMISSIONS`[is.na(ml.df$`BUILDING_EMISSIONS`)] <- 0
+ml.df$`Transport Total`[is.na(ml.df$`Transport Total`)] <- 0
+```
+
+Run the Multi linear regression model on Population Density, Non-Domestic Building emissions and Road Transport emissions. 
+
+```{r RunMultilinearReg, echo=TRUE}
+
+model2 <- train(`Grand Total` ~ popden+BUILDING_EMISSIONS+`Transport Total`, 
+                ml.df,
+                method="lm", 
+                trControl=trainControl(method="repeatedcv",
+                                       number=10,
+                                       repeats=1,
+                                       # change to true to see it 
+                                       # iterate
+                                       verboseIter=TRUE))
+summary(model2)
+print(model2)
+
+```
+
+

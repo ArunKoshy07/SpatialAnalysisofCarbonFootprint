@@ -1,8 +1,8 @@
-name: "Spatial Analysis of Carbon footprint"
-output_dir: .
+name: "Spatial Analysis of Carbon Footprint"
+output_dir: _site
 navbar:
-  title: "Carbon footprint spatial analysis"
-  right:
+  title: "Spatial Analysis of Carbon Footprint"
+  left:
     - text: "Home"
       href: index.html
     - text: "About"

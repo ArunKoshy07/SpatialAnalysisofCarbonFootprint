@@ -1,5 +1,5 @@
 ---
-title: "Spatial Analysis of Carbon Footprint in England, Wales and Scotland"
+title: "Spatial Analysis of Carbon Footprint"
 ---
 
-More about this website.
+@UCL-Casa GIS (CASA005)
