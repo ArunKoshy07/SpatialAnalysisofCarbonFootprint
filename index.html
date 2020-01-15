@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Spatial Analysis of Carbon Footprint</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="css\style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Spatial Analysis of Carbon Footprint</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Spatial Analysis of Carbon Footprint</h1>
+
+</div>
+
+
+<p>Global warming and Climate Change is causing catastrophic and devastating effect on the planet earth.The impact of global warming is wide ranging and few of those are increase in temperature along tropical regions, increase in humidity, melt down of artic glaciers, affects the Marine ecosystem like ocean acidification and depletion of coral reefs, increase in sea level, harsh seasons, affects the vulnerable people, increase poverty and malnutrition, increase in heat related morbidity and mortalities, decrease in agricultural yields and nutritional quality of crops, affect the livestock, increase water stress and decline economic growth.</p>
+<p>The data used for this analysis was confined to values with IQR for each variable. The whole of Domestic and Non Domestic building EPC data couldn’t be used for this study, instead only the top 5 percent of the IQR values were used. Scatter plots were used to visualise the trend’s and the residual plots were used to visualise the variation of data from the mean.The Correlations analysis showed all the variables in scope of this research had very weak correlation coefficient with the total emissions.The Bivariate models had very low R squared values making it a not so good fit model. The Multi linear regression on the total emissions and emissionsfrom transport and domestic building proved to be a good fitting model with very low p value and R squared value close to 1.</p>
+<p>The R code developed for the visualisation and analysis of this topic is provided below</p>
+<p>Data and Shape files location (google drive) <a href="https://drive.google.com/drive/folders/16y-bm3wLjN4ChO5D3lzILaBkQCHKe7Og?usp=sharing" class="uri">https://drive.google.com/drive/folders/16y-bm3wLjN4ChO5D3lzILaBkQCHKe7Og?usp=sharing</a></p>
+<pre class="r"><code>library(crs)
+library(sf)
+library(tmap)
+library(tmaptools)
+library(plyr)
+library(tidyverse)
+library(rmapshaper)
+library(rgdal)
+library(dplyr)
+library(numbers)
+library(maptools)
+library(caret)</code></pre>
+<p>Read the EPC data sets for Domestic and Non-Domestic buildings.</p>
+<p>Read the extracted data and combine them for visualisation purpose.</p>
+<pre class="r"><code>#Read the Local authority emissions data file 
+UKCO2.df &lt;- read_csv(&quot;./Data/2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   .default = col_number(),
+##   `Region Name` = col_character(),
+##   `Second Tier Authority` = col_character(),
+##   LAD14NM = col_character(),
+##   LAD14CD = col_character(),
+##   Year = col_double(),
+##   `C. Large Industrial Installations` = col_character(),
+##   `E. Agriculture` = col_double(),
+##   `H. Domestic &#39;Other Fuels&#39;` = col_double(),
+##   `J. Road Transport (Motorways)` = col_character(),
+##   `L. Diesel Railways` = col_character(),
+##   `M. Transport Other` = col_double(),
+##   `Per Capita Emissions (t)` = col_double()
+## )</code></pre>
+<pre><code>## See spec(...) for full column specifications.</code></pre>
+<pre><code>## Warning: 625 parsing failures.
+##  row                       col               expected actual                                                                        file
+## 2757 H. Domestic &#39;Other Fuels&#39; no trailing characters ,191.8 &#39;./Data/2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv&#39;
+## 2758 H. Domestic &#39;Other Fuels&#39; no trailing characters ,217.7 &#39;./Data/2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv&#39;
+## 2759 H. Domestic &#39;Other Fuels&#39; no trailing characters ,104.8 &#39;./Data/2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv&#39;
+## 2760 H. Domestic &#39;Other Fuels&#39; no trailing characters ,167.8 &#39;./Data/2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv&#39;
+## 2761 H. Domestic &#39;Other Fuels&#39; no trailing characters ,114.8 &#39;./Data/2005-17_UK_local_and_regional_CO2_emissions_tables (version 1).csv&#39;
+## .... ......................... ...................... ...... ...........................................................................
+## See problems(...) for more details.</code></pre>
+<pre class="r"><code>#summary(UKCO2.df)
+#names(UKCO2.df)
+
+# Read the Shapefile
+OSME &lt;- st_read(&quot;./Shapefile/DistrictBoroughUnitaryEngWalScot.shp&quot;)</code></pre>
+<pre><code>## Reading layer `DistrictBoroughUnitaryEngWalScot&#39; from data source `C:\CASA_SDAV\GIS_CASA0005\FinalCoursework\SpatialAnalysisofCarbonFootprint\Shapefile\DistrictBoroughUnitaryEngWalScot.shp&#39; using driver `ESRI Shapefile&#39;
+## Simple feature collection with 371 features and 16 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: 5512.998 ymin: 5333.603 xmax: 655989 ymax: 1220302
+## epsg (SRID):    NA
+## proj4string:    +proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +datum=OSGB36 +units=m +no_defs</code></pre>
+<pre class="r"><code>OSME &lt;- st_transform(OSME,crs=27700)
+OSME &lt;- ms_simplify(OSME,0.05)
+#OSME
+
+nondomestic.epc &lt;- read.csv(&quot;./Data/all-non-domestic-certificates/combinedcertificates.csv&quot;)
+
+nondomestic.epc &lt;- nondomestic.epc[,c(&quot;LOCAL_AUTHORITY&quot;,&quot;POSTCODE&quot;,&quot;BUILDING_EMISSIONS&quot;)]
+nondomestic.epc &lt;- nondomestic.epc %&gt;% filter(!is.na(LOCAL_AUTHORITY)) %&gt;% filter(!is.na(BUILDING_EMISSIONS)) %&gt;% 
+                    filter(BUILDING_EMISSIONS &lt; 128)
+nondomestic.epc &lt;- nondomestic.epc[order(-nondomestic.epc$BUILDING_EMISSIONS),]
+#summary(nondomestic.epc$BUILDING_EMISSIONS)
+
+
+domestic.epc &lt;- read.csv(&quot;./Data/all-domestic-certificates/combinedcertificates.csv&quot;)
+domestic.epc &lt;- domestic.epc %&gt;% filter(!is.na(LOCAL_AUTHORITY)) %&gt;% filter(!is.na(CO2_EMISSIONS_CURRENT))%&gt;%
+              filter(CO2_EMISSIONS_CURRENT&lt;=5.10)
+domestic.epc &lt;- domestic.epc[order(-domestic.epc$CO2_EMISSIONS_CURRENT),]
+#domestic.epc
+#summary(domestic.epc$CO2_EMISSIONS_CURRENT)
+
+
+dlen = round(nrow(domestic.epc)*(5/100))
+nlen = round(nrow(nondomestic.epc)*(5/100))
+domestic.epct &lt;- domestic.epc[1:dlen,] 
+nondomestic.epct &lt;- nondomestic.epc[1:nlen,]
+
+
+pclatlon &lt;- data.frame(read.csv(&quot;./Data/ukpostcodes/ukpostcodes.csv&quot;))
+names(pclatlon) &lt;- c(&quot;ID&quot;,&quot;POSTCODE&quot;,&quot;LATITUDE&quot;,&quot;LONGITUDE&quot;)
+#head(pclatlon)
+
+nondmc.df &lt;- merge(nondomestic.epct,pclatlon,by=&quot;POSTCODE&quot;)
+dmc.df &lt;- merge (domestic.epct,pclatlon,by=&quot;POSTCODE&quot;)
+
+
+ndmc.epc &lt;- st_as_sf(nondmc.df, coords = c(&quot;LONGITUDE&quot;,&quot;LATITUDE&quot;), crs = 4326)
+#summary(ndmc.epc$BUILDING_EMISSIONS)
+dmc.epc &lt;- st_as_sf(dmc.df, coords = c(&quot;LONGITUDE&quot;,&quot;LATITUDE&quot;), crs = 4326)
+#summary(dmc.epc$CO2_EMISSIONS_CURRENT)</code></pre>
+<p>R function to generate the time series map.</p>
+<pre class="r"><code>OSMEJ.df &lt;- merge(OSME,UKCO2.df,by.x=&quot;Census_Cod&quot;,by.y=&quot;LAD14CD&quot;,all.x = TRUE)
+
+#left_join(OSME,UKCO2.df,by =c(&quot;Census_Cod&quot;=&quot;LAD14CD&quot;))
+
+#summarise(OSMEJ.df)
+
+
+colnames(OSMEJ.df)[39] &lt;- &quot;Population (000&#39;S)&quot;
+
+dispmap3 &lt;-function(shpobj,fieldname,titlevalue,colcode){
+tm1 &lt;- tm_shape(shpobj %&gt;% filter(Year==c(2006) )) +
+  tm_polygons(fieldname,
+              style=&quot;jenks&quot;,
+              palette=colcode,
+              midpoint=FALSE,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE) 
+
+tm2 &lt;- tm_shape( shpobj %&gt;% filter(Year==c(2012) )) +
+  tm_polygons(fieldname, 
+              #style=c(&quot;jenks&quot;, &quot;pretty&quot;),
+              #palette=list(&quot;YlOrBr&quot;, &quot;Purples&quot;),
+              style=&quot;jenks&quot;,
+              palette=colcode,
+              midpoint=FALSE,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE) 
+
+tm3 &lt;- tm_shape( shpobj %&gt;% filter(Year==c(2017) )) +
+  tm_polygons(fieldname, 
+              style=&quot;jenks&quot;,
+              palette=colcode,
+              midpoint=FALSE,
+              border.alpha=0.1)+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE) 
+
+legend &lt;- tm_shape(shpobj %&gt;% filter(Year==c(2017))) +
+  tm_polygons(fieldname,title=titlevalue,
+              style=&quot;jenks&quot;,
+              palette=colcode) +
+  tm_scale_bar(position=c(0.2,0.04), text.size=0.6)+
+  tm_layout(legend.only = TRUE, legend.position=c(0.2,0.25),asp=0.1)+
+  tm_credits(&quot;(c) Ordinance Survey and DEFRA&quot;, position=c(0.0,0.0))
+
+tmap_mode(&quot;plot&quot;)
+t=tmap_arrange(tm1,tm2,tm3,legend,ncol=4)
+t
+}</code></pre>
+<p>Display Time series maps for Total emissions, Transport Total,</p>
+<pre class="r"><code>dispmap3(OSMEJ.df,&quot;Grand Total&quot;,&quot;Total Emissions (t)&quot;,&quot;YlOrBr&quot;)</code></pre>
+<pre><code>## tmap mode set to plotting</code></pre>
+<p><img src="index_files/figure-html/disp3map-1.png" width="672" /></p>
+<pre class="r"><code>dispmap3(OSMEJ.df,&quot;Transport Total&quot;,&quot;Transport Emissions&quot;,&quot;Blues&quot;)</code></pre>
+<pre><code>## tmap mode set to plotting</code></pre>
+<p><img src="index_files/figure-html/disp3map-2.png" width="672" /></p>
+<pre class="r"><code>dispmap3(OSMEJ.df,&quot;Population (000&#39;S)&quot;,&quot;Population (000&#39;s)&quot;,&quot;YlGnBu&quot;)</code></pre>
+<pre><code>## tmap mode set to plotting</code></pre>
+<p><img src="index_files/figure-html/disp3map-3.png" width="672" /></p>
+<p>Plot Domestic and Non Domestic Building data using a function. function to plot the epc map.</p>
+<pre class="r"><code>plotEpcData &lt;- function(mapspdf,epcspdf,fieldname,maptext){
+  
+tm2 &lt;- tm_shape(mapspdf) +
+  tm_fill(&quot;#081d58&quot;)+
+  tm_polygons()+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE) +
+  tm_shape(epcspdf)+ 
+  tm_dots(fieldname,palette=&quot;YlOrBr&quot;,size=0.0001)
+
+legend1 &lt;- 
+  tm_shape(epcspdf)+ tm_dots(fieldname,title=maptext,
+                                    palette=&quot;YlOrBr&quot;) +
+  tm_scale_bar(position=c(0.2,0.04), text.size=0.6)+
+  tm_layout(legend.only = TRUE, legend.position=c(0.2,0.25),asp=0.1)+
+  tm_credits(&quot;(c) Ordinance Survey and DEFRA&quot;, position=c(0.0,0.0))
+
+tmap_mode(&quot;plot&quot;)
+t=tmap_arrange(tm2,legend1,ncol=2)
+t
+}</code></pre>
+<p>Plot the EPC Maps for Domestic and Non Domestic data.</p>
+<pre class="r"><code>plotEpcData(OSME,dmc.epc,&quot;CO2_EMISSIONS_CURRENT&quot;,&quot;Domestic Emissions (Kilo)&quot;)</code></pre>
+<pre><code>## tmap mode set to plotting</code></pre>
+<pre><code>## Warning: One tm layer group has duplicated layer types, which are omitted. To
+## draw multiple layers of the same type, use multiple layer groups (i.e. specify
+## tm_shape prior to each of them).</code></pre>
+<p><img src="index_files/figure-html/plotEpcMap-1.png" width="672" /></p>
+<pre class="r"><code>plotEpcData(OSME,ndmc.epc,&quot;BUILDING_EMISSIONS&quot;,&quot;Non-Domestic Building Emissions (t)&quot;)  </code></pre>
+<pre><code>## tmap mode set to plotting</code></pre>
+<pre><code>## Warning: One tm layer group has duplicated layer types, which are omitted. To
+## draw multiple layers of the same type, use multiple layer groups (i.e. specify
+## tm_shape prior to each of them).</code></pre>
+<p><img src="index_files/figure-html/plotEpcMap-2.png" width="672" /></p>
+<p>Aggregate all the values in the data frames at a local authority level. Combine all spatial dataframes.</p>
+<pre class="r"><code>cdmc.epc &lt;- dmc.epc %&gt;% group_by(LOCAL_AUTHORITY)%&gt;% 
+  summarise(CO2_EMISSIONS_CURRENT = sum(CO2_EMISSIONS_CURRENT))%&gt;%
+  select(LOCAL_AUTHORITY,CO2_EMISSIONS_CURRENT) 
+
+cndmc.epc &lt;- ndmc.epc %&gt;% group_by(LOCAL_AUTHORITY)%&gt;% 
+  summarise(BUILDING_EMISSIONS = sum(BUILDING_EMISSIONS))%&gt;%
+  select(LOCAL_AUTHORITY,BUILDING_EMISSIONS)
+
+
+cdmc.epc &lt;- st_transform(cdmc.epc,crs=27700)
+cndmc.epc &lt;-  st_transform(cndmc.epc,crs=27700)
+
+COSMEJ.df &lt;- st_join(st_join(OSMEJ.df,cdmc.epc,join=st_covers),
+                     cndmc.epc,join=st_covers )</code></pre>
+<p>Code to calcualte the pearson coefficient and do a scatterplot. Code to generate Pearson coeffiicient and scatterplot for Total Emission vs Transport Emissions.</p>
+<pre class="r"><code>summary(OSMEJ.df$`Grand Total`)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
+##     9.1   641.9   895.9  1141.7  1296.5 11313.2       7</code></pre>
+<pre class="r"><code>summary(OSMEJ.df$`Transport Total`)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
+##     2.4   179.9   291.4   330.1   416.9  1830.3       7</code></pre>
+<pre class="r"><code>val &lt;- OSMEJ.df %&gt;% filter(Year == 2017)%&gt;%filter(`Grand Total` &lt;= 1296)   %&gt;% 
+        filter(Year == 2017)%&gt;%filter(`Transport Total` &lt;= 417)
+
+scatter.smooth(x= val$`Grand Total`, 
+               y= val$`Transport Total`, 
+               main=&quot;Grand Total ~ Transport Emissions&quot;,
+               xlab=&quot;Grand Total (t)&quot;,
+               ylab=&quot;Transport Emission (t)&quot;) </code></pre>
+<p><img src="index_files/figure-html/calCorrelationCoffScatterplot-1.png" width="672" /></p>
+<pre class="r"><code>stat_sig=cor.test(val$`Grand Total`, 
+                  val$`Transport Total`, 
+                  use =&quot;complete.obs&quot;,
+                  method = c(&quot;pearson&quot;))
+stat_sig</code></pre>
+<pre><code>## 
+##  Pearson&#39;s product-moment correlation
+## 
+## data:  val$`Grand Total` and val$`Transport Total`
+## t = 14.966, df = 258, p-value &lt; 2.2e-16
+## alternative hypothesis: true correlation is not equal to 0
+## 95 percent confidence interval:
+##  0.6106823 0.7418257
+## sample estimates:
+##       cor 
+## 0.6816919</code></pre>
+<pre class="r"><code>linearMod &lt;- lm(`Grand Total` ~ `Transport Total`, data=val)
+linearMod</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = `Grand Total` ~ `Transport Total`, data = val)
+## 
+## Coefficients:
+##       (Intercept)  `Transport Total`  
+##           242.956              1.721</code></pre>
+<pre class="r"><code>summary(linearMod)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = `Grand Total` ~ `Transport Total`, data = val)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -568.58 -119.87  -50.65   92.22  635.45 
+## 
+## Coefficients:
+##                   Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)        242.956     28.820    8.43 2.47e-15 ***
+## `Transport Total`    1.721      0.115   14.97  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 183.2 on 258 degrees of freedom
+## Multiple R-squared:  0.4647, Adjusted R-squared:  0.4626 
+## F-statistic:   224 on 1 and 258 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>qplot(linearMod$residuals)+geom_histogram()</code></pre>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="index_files/figure-html/calCorrelationCoffScatterplot-2.png" width="672" /></p>
+<p>Prepare a data required running the multi linear regression. Convert the spatial dataframe to normal one, replace the NULL values with 0’s. calculate the Population density as total population divided by area in hectare and store in a new column in data frame.</p>
+<pre class="r"><code>colnames(COSMEJ.df)[39] &lt;- &quot;population&quot;
+colnames(COSMEJ.df)[30] &lt;- &quot;DomesticTotal&quot;
+
+
+ml.df&lt;-as.data.frame(st_set_geometry(COSMEJ.df, NULL)) %&gt;%filter(Year==2017)
+ml.df$population[is.na(ml.df$population)] &lt;- 0
+ml.df$popden &lt;- (ml.df$population*1000) %/% ml.df$Hectares
+ml.df$popden[is.na(ml.df$popden)] &lt;- 0
+
+ml.df$DomesticTotal[is.na(ml.df$DomesticTotal)] &lt;- 0
+ml.df$`Grand Total`[is.na(ml.df$`Grand Total`)] &lt;- 0
+ml.df$`BUILDING_EMISSIONS`[is.na(ml.df$`BUILDING_EMISSIONS`)] &lt;- 0
+ml.df$`Transport Total`[is.na(ml.df$`Transport Total`)] &lt;- 0</code></pre>
+<p>Run the Multi linear regression model on Population Density, Non-Domestic Building emissions and Road Transport emissions.</p>
+<pre class="r"><code>model2 &lt;- train(`Grand Total` ~ popden+BUILDING_EMISSIONS+`Transport Total`, 
+                ml.df,
+                method=&quot;lm&quot;, 
+                trControl=trainControl(method=&quot;repeatedcv&quot;,
+                                       number=10,
+                                       repeats=1,
+                                       # change to true to see it 
+                                       # iterate
+                                       verboseIter=TRUE))</code></pre>
+<pre><code>## + Fold01.Rep1: intercept=TRUE 
+## - Fold01.Rep1: intercept=TRUE 
+## + Fold02.Rep1: intercept=TRUE 
+## - Fold02.Rep1: intercept=TRUE 
+## + Fold03.Rep1: intercept=TRUE 
+## - Fold03.Rep1: intercept=TRUE 
+## + Fold04.Rep1: intercept=TRUE 
+## - Fold04.Rep1: intercept=TRUE 
+## + Fold05.Rep1: intercept=TRUE 
+## - Fold05.Rep1: intercept=TRUE 
+## + Fold06.Rep1: intercept=TRUE 
+## - Fold06.Rep1: intercept=TRUE 
+## + Fold07.Rep1: intercept=TRUE 
+## - Fold07.Rep1: intercept=TRUE 
+## + Fold08.Rep1: intercept=TRUE 
+## - Fold08.Rep1: intercept=TRUE 
+## + Fold09.Rep1: intercept=TRUE 
+## - Fold09.Rep1: intercept=TRUE 
+## + Fold10.Rep1: intercept=TRUE 
+## - Fold10.Rep1: intercept=TRUE 
+## Aggregating results
+## Fitting final model on full training set</code></pre>
+<pre class="r"><code>summary(model2)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = .outcome ~ ., data = dat)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -1219.5  -176.0   -78.1    29.0  6793.1 
+## 
+## Coefficients:
+##                          Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)             96.960195  64.217756   1.510  0.13195    
+## popden                   3.512544   1.307125   2.687  0.00754 ** 
+## BUILDING_EMISSIONS       0.006598   0.003402   1.940  0.05322 .  
+## `\\`Transport Total\\``  2.025415   0.163972  12.352  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 589.2 on 360 degrees of freedom
+## Multiple R-squared:  0.3925, Adjusted R-squared:  0.3875 
+## F-statistic: 77.54 on 3 and 360 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>print(model2)</code></pre>
+<pre><code>## Linear Regression 
+## 
+## 364 samples
+##   3 predictor
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold, repeated 1 times) 
+## Summary of sample sizes: 327, 327, 328, 328, 327, 328, ... 
+## Resampling results:
+## 
+##   RMSE      Rsquared   MAE     
+##   484.3519  0.5682214  240.6747
+## 
+## Tuning parameter &#39;intercept&#39; was held constant at a value of TRUE</code></pre>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
